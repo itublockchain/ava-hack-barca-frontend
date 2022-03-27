@@ -20,11 +20,7 @@ function App() {
 
   return (
     <div className={currentTheme}>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainApp />} />
-        </Routes>
-      </BrowserRouter>
+      <MainApp />
       <ToastContainer
         position="top-right"
         autoClose={5000}

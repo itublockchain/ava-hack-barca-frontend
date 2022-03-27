@@ -37,6 +37,8 @@ import { checkIfRightNetwork } from "utils/checkIfRightNetwork";
 import { requestChain } from "utils/requestChain";
 import { IS_PROD } from "utils/isProd";
 
+const regexp = /^-?\d*\.?\d*$/;
+
 const Bridge = () => {
   const tokenFromModal = useModal();
   const tokenOutModal = useModal();
@@ -66,8 +68,8 @@ const Bridge = () => {
         arr.push(res.data[item]);
       });
       setNetworks(arr);
-      setNetworkIn(arr[0]);
-      setNetworkOut(arr[1]);
+      setNetworkIn(arr.filter((item: any) => item.networkId === 43113)[0]);
+      setNetworkOut(arr.filter((item: any) => item.networkId === 4)[0]);
     },
   });
 
@@ -126,7 +128,7 @@ const Bridge = () => {
       const claim = new Claims(
         tokenIn?.originNetworkId,
         networkIn?.networkId,
-        tokenIn?.address,
+        chainId === 43113 ? tokenIn?.address : tokenIn?.originAddress,
         _amount,
         res.data?.signedMessage,
         res.data?.tokenName,
@@ -204,6 +206,7 @@ const Bridge = () => {
         },
         _amount
       );
+      setAmountIn("");
     } catch (err) {
       console.log(err);
       setLoading(false);
@@ -235,7 +238,7 @@ const Bridge = () => {
         claim._mainChain,
         claim._nonce,
         claim._midChain,
-        chainId !== 43113 ? claim._mainAddress : tokenIn?.address,
+        claim._mainAddress,
         ethers.utils.parseEther(claim._amount),
         claim._signature,
         claim._name,
@@ -355,7 +358,16 @@ const Bridge = () => {
                   setFocused(false);
                 }}
                 value={amountIn}
-                onChange={(e) => setAmountIn(e.target.value)}
+                onChange={(e) => {
+                  if (
+                    !regexp.test(e.target.value) ||
+                    e.target.value.includes("-")
+                  ) {
+                    return;
+                  }
+
+                  setAmountIn(e.target.value);
+                }}
                 className={styles.input}
                 placeholder={"Enter Amount"}
               />
@@ -446,7 +458,8 @@ const Bridge = () => {
               tokensIn?.length <= 0 ||
               !auth ||
               claims?.length > 0 ||
-              chainId !== networkIn?.networkId
+              chainId !== networkIn?.networkId ||
+              !amountIn
             }
             style={{ marginTop: "32px" }}
             size="xl"
